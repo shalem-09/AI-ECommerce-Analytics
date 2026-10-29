@@ -1,0 +1,1 @@
+"""Local business analytics assistant."""

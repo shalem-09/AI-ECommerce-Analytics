@@ -1,0 +1,112 @@
+// Create this calculated table and relate Calendar[Date] to v_sales_detail[order_day].
+Calendar =
+CALENDAR (
+    MIN ( 'v_sales_detail'[order_day] ),
+    MAX ( 'v_sales_detail'[order_day] )
+)
+
+Gross Merchandise Value =
+CALCULATE (
+    SUM ( 'v_sales_detail'[gross_merchandise_value] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Net Sales =
+CALCULATE (
+    SUM ( 'v_sales_detail'[net_sales] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Estimated Product Cost =
+CALCULATE (
+    SUM ( 'v_sales_detail'[product_cost] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Estimated Gross Profit =
+CALCULATE (
+    SUM ( 'v_sales_detail'[gross_profit] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Gross Profit Margin =
+DIVIDE ( [Estimated Gross Profit], [Net Sales], 0 )
+
+Completed Orders =
+CALCULATE (
+    DISTINCTCOUNT ( 'v_sales_detail'[order_id] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Units Sold =
+CALCULATE (
+    SUM ( 'v_sales_detail'[quantity] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Average Order Value =
+DIVIDE ( [Net Sales], [Completed Orders], 0 )
+
+Repeat Customers =
+VAR CustomerOrderCounts =
+    SUMMARIZE (
+        FILTER ( 'v_sales_detail', 'v_sales_detail'[order_status] = "Completed" ),
+        'v_sales_detail'[customer_id],
+        "CompletedOrderCount", DISTINCTCOUNT ( 'v_sales_detail'[order_id] )
+    )
+RETURN
+    COUNTROWS ( FILTER ( CustomerOrderCounts, [CompletedOrderCount] > 1 ) )
+
+Completed Buyers =
+CALCULATE (
+    DISTINCTCOUNT ( 'v_sales_detail'[customer_id] ),
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Repeat Customer Rate =
+DIVIDE ( [Repeat Customers], [Completed Buyers], 0 )
+
+Average Discount % =
+CALCULATE (
+    AVERAGE ( 'v_sales_detail'[discount_percent] ) / 100,
+    'v_sales_detail'[order_status] = "Completed"
+)
+
+Cancelled Orders =
+CALCULATE (
+    DISTINCTCOUNT ( 'v_sales_detail'[order_id] ),
+    'v_sales_detail'[order_status] = "Cancelled"
+)
+
+Returned Orders =
+CALCULATE (
+    DISTINCTCOUNT ( 'v_sales_detail'[order_id] ),
+    'v_sales_detail'[order_status] = "Returned"
+)
+
+Cancellation Rate =
+DIVIDE (
+    [Cancelled Orders],
+    CALCULATE ( DISTINCTCOUNT ( 'v_sales_detail'[order_id] ), REMOVEFILTERS ( 'v_sales_detail'[order_status] ) ),
+    0
+)
+
+Return Rate =
+DIVIDE (
+    [Returned Orders],
+    CALCULATE ( DISTINCTCOUNT ( 'v_sales_detail'[order_id] ), REMOVEFILTERS ( 'v_sales_detail'[order_status] ) ),
+    0
+)
+
+Net Sales Previous Month =
+CALCULATE (
+    [Net Sales],
+    DATEADD ( 'Calendar'[Date], -1, MONTH )
+)
+
+Month-over-Month Growth =
+DIVIDE (
+    [Net Sales] - [Net Sales Previous Month],
+    [Net Sales Previous Month],
+    0
+)

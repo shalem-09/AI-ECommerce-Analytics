@@ -1,0 +1,26 @@
+// Create a blank query in Power BI Desktop and paste this into Advanced Editor.
+// Install/enable the MySQL connector and update server/database as needed.
+let
+    Source = MySQL.Database(
+        "localhost",
+        "ecommerce_analytics",
+        [
+            ReturnSingleDatabase = true,
+            Query = "SELECT * FROM v_sales_detail"
+        ]
+    ),
+    TypedColumns = Table.TransformColumnTypes(
+        Source,
+        {
+            {"order_date", type datetime},
+            {"order_day", type date},
+            {"quantity", Int64.Type},
+            {"unit_price", Currency.Type},
+            {"discount_percent", type number},
+            {"unit_cost", Currency.Type},
+            {"net_sales", Currency.Type},
+            {"gross_profit", Currency.Type}
+        }
+    )
+in
+    TypedColumns
